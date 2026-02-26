@@ -39,11 +39,13 @@ function main() {
   keyboardControlActions(); //keyboard controls.
   projectileCollision(); //checks if the player is getting hit by a projectile in the next frame
   badPlatformCollision(); //checks if the player is touching a bad platform
-  collectablesCollide(); //checks if player has touched a collectable
+  collectablesCollideEnhanced(); //checks if player has touched a collectable (enhanced with effects)
 
   animate(); //this changes halle's picture to the next frame so it looks animated.
   // debug()                   //debugging values. Comment this out when not debugging.
+  updateAndDrawParticles(); //draw particle effects
   drawRobot(); //this actually displays the image of the robot.
+  drawGameUI(); //draw the game UI on top
 }
 
 function getJSON(url, callback) {
@@ -233,7 +235,7 @@ function drawRobot() {
       player.x - hitDx,
       player.y - hitDy,
       player.width,
-      player.height
+      player.height,
     );
   } else {
     //for running to the left you mirror the image
@@ -248,7 +250,7 @@ function drawRobot() {
       -player.x - player.width + hitDx,
       player.y - hitDy,
       player.width,
-      player.height
+      player.height,
     );
     ctx.restore(); //put the canvas back to normal
   }
@@ -270,7 +272,7 @@ function collision() {
         platforms[i].x,
         platforms[i].y,
         platforms[i].width,
-        platforms[i].height
+        platforms[i].height,
       );
     }
   }
@@ -393,7 +395,7 @@ function deathOfPlayer() {
     canvas.width / 4,
     canvas.height / 6,
     canvas.width / 2,
-    canvas.height / 2
+    canvas.height / 2,
   );
   ctx.fillStyle = "black";
   ctx.font = "800% serif";
@@ -401,14 +403,14 @@ function deathOfPlayer() {
     "You are dead",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 5,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   ctx.font = "500% serif";
   ctx.fillText(
     "Hit any key to restart",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 3,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   if (keyPress.any) {
     keyPress.any = false;
@@ -470,26 +472,130 @@ function drawPlatforms() {
       }
     }
 
-    // Draw the platform
+    // Draw cute platform with rounded corners and decorations
     const { color, x, y, width, height } = platforms[i];
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
+    const borderRadius = 12;
+
+    // Draw shadow for depth
+    ctx.fillStyle = "rgba(0, 0, 0, 0.15)";
+    drawRoundedRect(ctx, x + 3, y + 3, width, height, borderRadius);
+    ctx.fill();
+
+    // Draw main platform with gradient
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, adjustBrightness(color, -20));
+    ctx.fillStyle = gradient;
+    drawRoundedRect(ctx, x, y, width, height, borderRadius);
+    ctx.fill();
+
+    // Add cute border highlight
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.4)";
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, x + 2, y + 2, width - 4, height - 4, borderRadius - 1);
+    ctx.stroke();
+
+    // Add cute dots pattern on platform
+    ctx.fillStyle = "rgba(255, 255, 255, 0.2)";
+    for (let j = 0; j < width; j += 40) {
+      for (let k = 0; k < height; k += 40) {
+        ctx.beginPath();
+        ctx.arc(x + j + 8, y + k + 8, 3, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    }
   }
+}
+
+// Helper function to draw rounded rectangle
+function drawRoundedRect(ctx, x, y, width, height, radius) {
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + width - radius, y);
+  ctx.arcTo(x + width, y, x + width, y + radius, radius);
+  ctx.lineTo(x + width, y + height - radius);
+  ctx.arcTo(x + width, y + height, x + width - radius, y + height, radius);
+  ctx.lineTo(x + radius, y + height);
+  ctx.arcTo(x, y + height, x, y + height - radius, radius);
+  ctx.lineTo(x, y + radius);
+  ctx.arcTo(x, y, x + radius, y, radius);
+  ctx.closePath();
+}
+
+// Helper function to adjust color brightness
+function adjustBrightness(color, percent) {
+  const num = parseInt(color.replace("#", ""), 16);
+  const amt = Math.round(2.55 * percent);
+  const R = (num >> 16) + amt;
+  const G = ((num >> 8) & 0x00ff) + amt;
+  const B = (num & 0x0000ff) + amt;
+  return (
+    "#" +
+    (
+      0x1000000 +
+      (R < 255 ? (R < 1 ? 0 : R) : 255) * 0x10000 +
+      (G < 255 ? (G < 1 ? 0 : G) : 255) * 0x100 +
+      (B < 255 ? (B < 1 ? 0 : B) : 255)
+    )
+      .toString(16)
+      .slice(1)
+  );
 }
 
 function drawFakePlatforms() {
   for (var i = 0; i < fakePlatforms.length; i++) {
     const { color, x, y, width, height } = fakePlatforms[i];
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
+    const borderRadius = 8;
+
+    // Draw shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.1)";
+    drawRoundedRect(ctx, x + 2, y + 2, width, height, borderRadius);
+    ctx.fill();
+
+    // Draw platform
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, adjustBrightness(color, -15));
+    ctx.fillStyle = gradient;
+    drawRoundedRect(ctx, x, y, width, height, borderRadius);
+    ctx.fill();
   }
 }
 
 function drawBadPlatforms() {
   for (var i = 0; i < badPlatforms.length; i++) {
     const { color, x, y, width, height } = badPlatforms[i];
-    ctx.fillStyle = color;
-    ctx.fillRect(x, y, width, height);
+    const borderRadius = 10;
+
+    // Draw a spiky/dangerous looking platform
+    // Shadow
+    ctx.fillStyle = "rgba(0, 0, 0, 0.2)";
+    drawRoundedRect(ctx, x + 2, y + 2, width, height, borderRadius);
+    ctx.fill();
+
+    // Main platform with scary gradient
+    const gradient = ctx.createLinearGradient(x, y, x, y + height);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, adjustBrightness(color, -30));
+    ctx.fillStyle = gradient;
+    drawRoundedRect(ctx, x, y, width, height, borderRadius);
+    ctx.fill();
+
+    // Draw spikes/danger indicators
+    ctx.fillStyle = "rgba(0, 0, 0, 0.3)";
+    for (let j = 10; j < width; j += 25) {
+      ctx.beginPath();
+      ctx.moveTo(x + j, y + height);
+      ctx.lineTo(x + j + 8, y + height + 8);
+      ctx.lineTo(x + j + 16, y + height);
+      ctx.fill();
+    }
+
+    // Add danger border
+    ctx.strokeStyle = "rgba(255, 0, 0, 0.4)";
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, x, y, width, height, borderRadius);
+    ctx.stroke();
   }
 }
 
@@ -509,7 +615,7 @@ function makeGrid() {
     ctx.fillText(
       i, // text
       i - 15, // x location
-      25 // y location
+      25, // y location
     );
   }
 
@@ -523,7 +629,7 @@ function makeGrid() {
     ctx.fillText(
       i, // text
       10, // x location
-      i + 5 // y location
+      i + 5, // y location
     );
   }
   gridMade = true;
@@ -531,15 +637,49 @@ function makeGrid() {
 
 function drawProjectiles() {
   for (var i = 0; i < projectiles.length; i++) {
-    ctx.drawImage(
-      projectileImage,
-      projectiles[i].x,
-      projectiles[i].y,
-      projectiles[i].width,
-      projectiles[i].height
+    // Draw cute projectile as a glowing orb instead of image
+    const projectile = projectiles[i];
+    const centerX = projectile.x + projectile.width / 2;
+    const centerY = projectile.y + projectile.height / 2;
+    const radius = projectile.width / 2;
+
+    // Outer glow
+    ctx.fillStyle = "rgba(255, 182, 193, 0.4)";
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius + 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Main projectile - cute pink orb
+    const projectileGradient = ctx.createRadialGradient(
+      centerX - 3,
+      centerY - 3,
+      0,
+      centerX,
+      centerY,
+      radius,
     );
-    projectiles[i].x = projectiles[i].x + projectiles[i].speedX;
-    projectiles[i].y = projectiles[i].y + projectiles[i].speedY;
+    projectileGradient.addColorStop(0, "#FFD4E5");
+    projectileGradient.addColorStop(1, "#FFB6D9");
+    ctx.fillStyle = projectileGradient;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Shine effect
+    ctx.fillStyle = "rgba(255, 255, 255, 0.6)";
+    ctx.beginPath();
+    ctx.arc(centerX - 3, centerY - 3, radius * 0.3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Border
+    ctx.strokeStyle = "rgba(255, 105, 180, 0.6)";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+    ctx.stroke();
+
+    projectile.x = projectile.x + projectile.speedX;
+    projectile.y = projectile.y + projectile.speedY;
   }
 }
 
@@ -552,7 +692,7 @@ function drawCannons() {
         cannons[i].x,
         cannons[i].y,
         cannons[i].projectileWidth,
-        cannons[i].projectileHeight
+        cannons[i].projectileHeight,
       );
     } else {
       cannons[i].projectileCountdown = cannons[i].projectileCountdown + 1;
@@ -573,28 +713,115 @@ function drawCannons() {
       }
     }
 
-    ctx.fillStyle = "grey";
-    ctx.save(); //save the current translation of the screen.
-    ctx.translate(cannons[i].x, cannons[i].y); //you are moving the top left of the screen to the pictures location, this is because you can't rotate the image, you have to rotate the whole page
-    ctx.rotate((cannons[i].rotation * Math.PI) / 180); //then you rotate. rotation is centered on 0,0 on the canvas, which is why we moved the picture to 0,0 with translate(x,y)
-    ctx.drawImage(cannonImage, 0, 0, cannonWidth, cannonHeight); //you draw the image on the rotated canvas. as of this line, the picture is straight and the rest of the page is rotated
-    //also the previous line uses -width / 2 so that the picture is centered. This will mean that (0,0) is at the exact center of the image
-    ctx.translate(-cannons[i].x, -cannons[i].y); //the reverse of the previous translate, this moves the page back to the correct place so that the image is no longer at (0,0)
-    ctx.restore(); //this unrotates the canvas so the canvas is straight, but now since you did that the picture looks rotated
+    // Draw cute cannon with enhanced visuals
+    ctx.save();
+    ctx.translate(cannons[i].x, cannons[i].y);
+    ctx.rotate((cannons[i].rotation * Math.PI) / 180);
+
+    // Draw cute cannon body (replace boring grey with cute design)
+    const cannonX = -cannonWidth / 2;
+    const cannonY = -cannonHeight / 2;
+
+    // Cute cannon base - rounded box
+    const baseGradient = ctx.createLinearGradient(
+      cannonX,
+      cannonY + 20,
+      cannonX,
+      cannonY + 50,
+    );
+    baseGradient.addColorStop(0, "#FFD4A3");
+    baseGradient.addColorStop(1, "#FFC878");
+    ctx.fillStyle = baseGradient;
+    drawRoundedRect(ctx, cannonX + 10, cannonY + 35, 40, 30, 6);
+    ctx.fill();
+
+    // Cute cannon barrel - rounded
+    const barrelGradient = ctx.createLinearGradient(
+      cannonX + 30,
+      cannonY,
+      cannonX + 30,
+      cannonY + 35,
+    );
+    barrelGradient.addColorStop(0, "#B5E7A0");
+    barrelGradient.addColorStop(1, "#A0D989");
+    ctx.fillStyle = barrelGradient;
+    drawRoundedRect(ctx, cannonX + 22, cannonY + 5, 16, 45, 8);
+    ctx.fill();
+
+    // Cannon opening
+    ctx.fillStyle = "#8B7355";
+    ctx.beginPath();
+    ctx.arc(cannonX + 30, cannonY + 5, 8, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add cute eyes to cannon base for personality
+    ctx.fillStyle = "white";
+    ctx.beginPath();
+    ctx.arc(cannonX + 20, cannonY + 45, 4, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cannonX + 40, cannonY + 45, 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Cute pupils
+    ctx.fillStyle = "#FF69B4";
+    ctx.beginPath();
+    ctx.arc(cannonX + 21, cannonY + 45, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(cannonX + 41, cannonY + 45, 2, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Add shine effects
+    ctx.strokeStyle = "rgba(255, 255, 255, 0.5)";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(cannonX + 30, cannonY + 12, 6, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Draw cute cannon on canvas if available
+    if (cannonImage) {
+      ctx.globalAlpha = 0; // Hide the original image, we're using our custom design
+      ctx.drawImage(cannonImage, cannonX, cannonY, cannonWidth, cannonHeight);
+      ctx.globalAlpha = 1;
+    }
+
+    ctx.translate(cannons[i].x, cannons[i].y);
+    ctx.restore();
   }
 }
 
 function drawCollectables() {
   for (var i = 0; i < collectables.length; i++) {
     if (collectables[i].collected !== true) {
-      //draw on screen if not collected
+      //draw on screen if not collected with cute effects
+
+      // Add a cute glow/sparkle effect
+      const glowIntensity = Math.sin(Date.now() / 200 + i) * 0.5 + 0.5;
+      ctx.shadowColor = "#FFB6D9";
+      ctx.shadowBlur = 10 + glowIntensity * 10;
+      ctx.shadowOffsetX = 0;
+      ctx.shadowOffsetY = 0;
+
+      // Rotate collectables for a fun bobbing effect
+      ctx.save();
+      ctx.translate(
+        collectables[i].x + collectableWidth / 2,
+        collectables[i].y + collectableHeight / 2,
+      );
+      ctx.rotate((Date.now() / 20 + i) * 0.01);
       ctx.drawImage(
         collectables[i].image,
-        collectables[i].x,
-        collectables[i].y,
+        -collectableWidth / 2,
+        -collectableHeight / 2,
         collectableWidth,
-        collectableHeight
+        collectableHeight,
       );
+      ctx.restore();
+
+      // Reset shadow
+      ctx.shadowColor = "rgba(0, 0, 0, 0)";
+      ctx.shadowBlur = 0;
     } else {
       //draw the icons at the top if collected
       if (collectables[i].alpha > 0.4) {
@@ -606,7 +833,7 @@ function drawCollectables() {
         200 + 100 * i,
         10,
         collectableWidth,
-        collectableHeight
+        collectableHeight,
       );
       ctx.globalAlpha = 1;
     }
@@ -679,7 +906,7 @@ function winGame() {
     canvas.width / 4,
     canvas.height / 6,
     canvas.width / 2,
-    canvas.height / 2
+    canvas.height / 2,
   );
   ctx.fillStyle = "white";
   ctx.font = "800% serif";
@@ -687,14 +914,14 @@ function winGame() {
     "You Win!",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 5,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   ctx.font = "500% serif";
   ctx.fillText(
     "Hit any key to restart",
     canvas.width / 4,
     canvas.height / 6 + canvas.height / 3,
-    (canvas.width / 16) * 14
+    (canvas.width / 16) * 14,
   );
   if (keyPress.any) {
     keyPress.any = false;
@@ -713,7 +940,7 @@ function createPlatform(
   speedX = 1,
   minY = null,
   maxY = null,
-  speedY = 1
+  speedY = 1,
 ) {
   platforms.push({
     x,
@@ -760,7 +987,7 @@ function createCannon(
   height = defaultProjectileHeight,
   minPos = null,
   maxPos = null,
-  speed = 1
+  speed = 1,
 ) {
   if (wallLocation === "top") {
     cannons.push({
@@ -841,7 +1068,7 @@ function createCollectable(
   bounce = 1,
   minX = null,
   maxX = null,
-  speed = 1
+  speed = 1,
 ) {
   if (type !== "") {
     var image = document.createElement("img");
@@ -984,4 +1211,125 @@ function handleKeyUp(e) {
 
 function loadJson() {
   getJSON("halle.json", JsonFunction); //runs this before the setup because of timing things
+}
+
+// ===== EPIC VISUAL ENHANCEMENTS =====
+
+// Update the UI score display
+function updateScoreDisplay() {
+  document.getElementById("score").textContent = playerScore;
+  document.getElementById("collectables").textContent = collectablesCollected;
+  document.getElementById("total-collectables").textContent =
+    collectables.length;
+  document.getElementById("level").textContent = Math.min(
+    Math.floor(collectablesCollected / 3) + 1,
+    3,
+  );
+}
+
+// Create particle effect when collectable is picked up
+function createParticles(x, y, color) {
+  for (let i = 0; i < 12; i++) {
+    const angle = (i / 12) * Math.PI * 2;
+    const velocity = 3 + Math.random() * 2;
+    particles.push({
+      x: x,
+      y: y,
+      vx: Math.cos(angle) * velocity,
+      vy: Math.sin(angle) * velocity,
+      life: 30,
+      color: color || "#FFE66D",
+      size: 4 + Math.random() * 4,
+    });
+  }
+}
+
+// Update and draw particles
+function updateAndDrawParticles() {
+  for (let i = particles.length - 1; i >= 0; i--) {
+    const p = particles[i];
+    p.x += p.vx;
+    p.y += p.vy;
+    p.vy += 0.2; // gravity
+    p.life--;
+
+    const alpha = p.life / 30;
+    ctx.fillStyle = p.color.replace(")", ", " + alpha + ")");
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+    ctx.fill();
+
+    if (p.life <= 0) {
+      particles.splice(i, 1);
+    }
+  }
+}
+
+// Draw game UI on canvas
+function drawGameUI() {
+  // Draw score in top-left corner
+  ctx.fillStyle = "rgba(255, 182, 193, 0.5)";
+  ctx.fillRect(10, 10, 300, 80);
+
+  ctx.font = "bold 20px Arial";
+  ctx.fillStyle = "#FF69B4";
+  ctx.fillText("Score: " + playerScore, 20, 35);
+
+  ctx.font = "16px Arial";
+  ctx.fillStyle = "#B5EAD7";
+  ctx.fillText(
+    "Collected: " + collectablesCollected + "/" + collectables.length,
+    20,
+    60,
+  );
+
+  ctx.fillStyle = "#FFB6D9";
+  ctx.fillText(
+    "Level: " + Math.min(Math.floor(collectablesCollected / 3) + 1, 3),
+    20,
+    85,
+  );
+
+  // Draw instructions in top-right
+  ctx.font = "14px Arial";
+  ctx.fillStyle = "rgba(255, 182, 193, 0.5)";
+  ctx.fillRect(canvas.width - 280, 10, 270, 90);
+
+  ctx.fillStyle = "#FFFFFF";
+  ctx.fillText("Arrow Keys / WASD: Move", canvas.width - 270, 30);
+  ctx.fillText("Space / Up: Jump", canvas.width - 270, 50);
+  ctx.fillText("Collect treasures! 💎", canvas.width - 270, 70);
+  ctx.fillText("Avoid cannons! 💣", canvas.width - 270, 90);
+}
+
+// Enhance collectables collision with visual feedback
+function collectablesCollideEnhanced() {
+  for (let i = collectables.length - 1; i >= 0; i--) {
+    const c = collectables[i];
+
+    if (
+      player.x < c.x + c.width &&
+      c.x < player.x + hitBoxWidth &&
+      player.y < c.y + c.height &&
+      c.y < player.y + hitBoxHeight
+    ) {
+      // Collectable collected!
+      collectablesCollected++;
+      playerScore += 100;
+
+      // Create particle effect
+      createParticles(c.x + c.width / 2, c.y + c.height / 2, "#FFB6D9");
+
+      // Remove collectable
+      collectables.splice(i, 1);
+
+      // Update UI
+      updateScoreDisplay();
+
+      console.log(
+        "%c💎 Treasure found! Score: " + playerScore,
+        "color: #FF69B4; font-weight: bold;",
+      );
+    }
+  }
 }

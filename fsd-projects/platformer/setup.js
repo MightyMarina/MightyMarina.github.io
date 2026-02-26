@@ -8,6 +8,14 @@ const projectileSpeed = 8; // the speed of projectiles
 let shouldDrawGrid = false;
 let gridMade = false;
 
+// Game state variables
+let playerScore = 0;
+let collectablesCollected = 0;
+let currentLevel = 1;
+let gameStartTime = Date.now();
+let particles = [];
+let movingPlatforms = [];
+
 /////////////////////////////////////////////////
 //////////ONLY CHANGE ABOVE THIS POINT///////////
 /////////////////////////////////////////////////

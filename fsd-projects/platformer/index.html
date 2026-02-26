@@ -1,8 +1,9 @@
-<!DOCTYPE html>
+<!doctype html>
 <html>
   <head>
     <meta charset="UTF-8" />
-    <title>platformer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>✨ Marina Epic Adventure | A Cute Journey</title>
     <link href="platformer.css" rel="stylesheet" />
     <script src="https://code.jquery.com/jquery-3.1.0.js"></script>
     <script src="setup.js"></script>
@@ -11,7 +12,20 @@
   </head>
 
   <body id="body">
-    <canvas id="canvas" width="1400" height="750"></canvas>
+    <div class="game-container">
+      <h1 class="game-title">� Marina Epic Adventure 🌸</h1>
+      <canvas id="canvas" width="1400" height="750"></canvas>
+      <div class="game-info">
+        <span>Score: <span id="score">0</span></span>
+        <span
+          >Collectables: <span id="collectables">0</span>/<span
+            id="total-collectables"
+            >0</span
+          ></span
+        >
+        <span>Level: <span id="level">1</span></span>
+      </div>
+    </div>
     <img id="cannon" src="images/cannon.png" />
     <img id="player" src="images/halle.png" />
     <img id="projectile" src="images/projectile.png" />
