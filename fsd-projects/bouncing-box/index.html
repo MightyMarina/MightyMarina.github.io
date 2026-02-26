@@ -21,6 +21,7 @@
 
       .board {
         height: 100vh;
+        background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><rect fill="%23e0f2f1" width="100" height="100"/><circle cx="20" cy="20" r="15" fill="%234dd0e1" opacity="0.4"/><circle cx="80" cy="80" r="10" fill="%234dd0e1" opacity="0.3"/></svg>');
       }
     </style>
     <!-- 	<script src="//cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script> -->
@@ -42,26 +43,56 @@
         var box = jQuery(".box"); // reference to the HTML .box element
         var board = jQuery(".board"); // reference to the HTML .board element
         var boardWidth = board.width(); // the maximum X-Coordinate of the screen
+        var boardHeight = jQuery(window).height(); // the maximum Y-Coordinate of the screen
 
-        // update the boardWidth variable when the window is resized
+        // update the boardWidth and boardHeight variables when the window is resized
         jQuery(window).on("resize", function () {
           boardWidth = board.width();
+          boardHeight = jQuery(window).height();
         });
 
         // Every 50 milliseconds, call the update Function (see below)
-        setInterval(update, 50);
+        var interval = setInterval(update, 50);
 
         // Every time the box is clicked, call the handleBoxClick Function (see below)
         box.on("click", handleBoxClick);
 
-        // moves the Box to a new position on the screen along the X-Axis
-        function moveBoxTo(newPositionX) {
+        // Track misclicks on the board (but not on the box)
+        board.on("click", function(event) {
+          // only count as a misclick if we didn't click the box itself
+          if (event.target !== box[0]) {
+            misclicks += 1;
+            // end game if 10 misclicks
+            if (misclicks >= 10) {
+              endGame();
+            }
+          }
+        });
+
+        // moves the Box to a new position on the screen along the X-Axis and Y-Axis
+        function moveBoxTo(newPositionX, newPositionY) {
           box.css("left", newPositionX);
+          box.css("top", newPositionY);
         }
 
         // changes the text displayed on the Box
         function changeBoxText(newText) {
           box.text(newText);
+        }
+
+        // generates and returns a random color in rgb format
+        function getRandomColor() {
+          var red = Math.random() * 255;
+          var green = Math.random() * 255;
+          var blue = Math.random() * 255;
+          return "rgb(" + red + ", " + green + ", " + blue + ")";
+        }
+
+        // ends the game by clearing the interval
+        function endGame() {
+          clearInterval(interval);
+          changeBoxText("GAME OVER!");
+          box.css("background-color", "red");
         }
 
         //////////////////////////////////////////////////////////////////
@@ -70,8 +101,11 @@
 
         // TODO 2 - Variable declarations
         var positionX = 0;
+        var positionY = 0;
         var points = 0;
-        var speed = 10; // initial movement speed
+        var speed = 10; // initial horizontal movement speed
+        var speedY = 5; // vertical movement speed
+        var misclicks = 0; // track the number of misclicks
 
         /**
          * This Function will be called 20 times/second.
@@ -81,6 +115,7 @@
         function update() {
           // move the box by current speed value
           positionX += speed;
+          positionY += speedY;
 
           // bounce off the right boundary
           if (positionX > boardWidth) {
@@ -92,7 +127,17 @@
             speed *= -1;
           }
 
-          moveBoxTo(positionX);
+          // bounce off the bottom boundary
+          if (positionY > boardHeight - 70) {
+            speedY *= -1;
+          }
+
+          // bounce off the top boundary
+          if (positionY < 0) {
+            speedY *= -1;
+          }
+
+          moveBoxTo(positionX, positionY);
         }
 
         /**
@@ -100,18 +145,32 @@
          * Each time it is called, it should perform each of the following actions:
          * - increase the points total
          * - increase the speed
-         * - move the box to the left side of the screen.
+         * - move the box to a random location on the screen.
+         * - change the box color
          */
         function handleBoxClick() {
-          // reset the box position
-          positionX = 0;
+          // reset the box position to a random location
+          positionX = Math.random() * boardWidth;
+          positionY = Math.random() * (boardHeight - 70);
 
           // increment score and compute speed using linear formula
           points += 1;
           speed = 3 * points + 10;
 
+          // increase speed every 3 clicks
+          if (points % 3 === 0) {
+            speedY += 2;
+          }
+
+          // change the box color
+          var colorStr = getRandomColor();
+          box.css("background-color", colorStr);
+
           // update display
           changeBoxText(points);
+
+          // reset misclicks counter
+          misclicks = 0;
         }
       })();
     </script>
