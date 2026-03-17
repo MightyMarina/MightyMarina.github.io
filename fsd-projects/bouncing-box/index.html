@@ -58,7 +58,7 @@
         box.on("click", handleBoxClick);
 
         // Track misclicks on the board (but not on the box)
-        board.on("click", function(event) {
+        board.on("click", function (event) {
           // only count as a misclick if we didn't click the box itself
           if (event.target !== box[0]) {
             misclicks += 1;

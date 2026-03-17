@@ -77,25 +77,30 @@ $(function () {
 
     // ===== EPIC COLLECTABLES: TREASURE HUNT =====
     // Level 1 treasures
-    createCollectable("diamond", 150, 420, 0, 0);
-    createCollectable("grace", 500, 350, 0, 0);
+    createCollectable("steve", 500, 350, 0, 0);
     createCollectable("database", 900, 200, 0, 0);
 
     // Level 2 treasures
-    createCollectable("max", 700, 250, 0, 0);
-    createCollectable("steve", 1050, 80, 0, 0);
+    createCollectable("grace", 700, 250, 0.5, 0.5); // Added some gravity and bounce
+    createCollectable("database", 1050, 80, 0, 0); // Note: changed "canes" to "cane"
 
     // Level 3 treasures
-    createCollectable("kennedi", 450, 80, 0, 0);
-    createCollectable("diamond", 1250, 50, 0, 0);
+    createCollectable("steve", 450, 80, 0.7, 0.6); // Now it's Steve, and he bounces!
+    createCollectable("grace", 1250, 50, 0.3, 0.8); // This one will float/bounce slowly
+    createCollectable("database", 1200, 150, 0, 0); // Changed "cane" to "db" for variety
+
+    // EXTRA COLLECTABLES (added by user request)
+    createCollectable("diamond", 550, 520, 0.5, 0.5); // bonus in lower middle
+    createCollectable("max", 950, 29, 0.3, 0.6); // floating near mid-level platforms
+    createCollectable("kennedi", 130, 80, 0.2, 0.6); // near final victory platform
 
     // ===== EPIC CANNONS: HAZARDS OF DOOM =====
-    // Strategic cannon placement
-    createCannon("left", 300, 3000);
-    createCannon("right", 1200, 2500);
-    createCannon("left", 500, 3500);
-    createCannon("right", 700, 2800);
-    createCannon("left", 900, 3200);
+    // Placing cannons on walls
+    createCannon("top", 400, 2500); // top wall cannon 1
+    createCannon("top", 1000, 2600); // top wall cannon 2
+    createCannon("left", 450, 2800); // left wall cannon
+    // Optional extra: right wall cannon for symmetry - uncomment if needed
+    // createCannon("right", 900, 2800);
 
     //////////////////////////////////
     // ONLY CHANGE ABOVE THIS POINT //

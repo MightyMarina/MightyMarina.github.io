@@ -1078,6 +1078,8 @@ function createCollectable(
       image,
       x,
       y,
+      width: collectableWidth,
+      height: collectableHeight,
       speedY: 0,
       collected: false,
       alpha: 2,
@@ -1099,8 +1101,8 @@ function createProjectile(wallLocation, x, y, width, height) {
 
   if (wallLocation === "top") {
     projectiles.push({
-      x: x - 71.5,
-      y: y - 55 - height / 2,
+      x: x - width / 2,
+      y: y + cannonHeight / 2 + height / 2,
       speedX: 0,
       speedY: projectileSpeed,
       width,
@@ -1108,8 +1110,8 @@ function createProjectile(wallLocation, x, y, width, height) {
     });
   } else if (wallLocation === "bottom") {
     projectiles.push({
-      x: x + 47,
-      y: y + 50 + height / 2,
+      x: x - width / 2,
+      y: y - cannonHeight / 2 - height / 2,
       speedX: 0,
       speedY: -projectileSpeed,
       width,
@@ -1117,8 +1119,8 @@ function createProjectile(wallLocation, x, y, width, height) {
     });
   } else if (wallLocation === "left") {
     projectiles.push({
-      x: x - 80 - width / 2,
-      y: y + 46,
+      x: x + cannonWidth / 2 + width / 2,
+      y: y - height / 2,
       speedX: projectileSpeed,
       speedY: 0,
       width,
@@ -1126,8 +1128,8 @@ function createProjectile(wallLocation, x, y, width, height) {
     });
   } else if (wallLocation === "right") {
     projectiles.push({
-      x: x + 40 + width / 2,
-      y: y - 71.5,
+      x: x - cannonWidth / 2 - width / 2,
+      y: y - height / 2,
       speedX: -projectileSpeed,
       speedY: 0,
       width,
